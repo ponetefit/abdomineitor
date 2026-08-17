@@ -293,16 +293,23 @@
 
             <!-- Next Exercise Preview -->
             <div class="mt-4 bg-slate-900/80 border border-slate-800 px-5 py-3 rounded-2xl flex items-center gap-3 max-w-md w-full justify-between">
-        <div class="max-w-md mx-auto w-full flex items-center justify-center gap-4">
-            <button id="btn-timer-prev" class="p-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl transition active:scale-95">
-                <i data-lucide="skip-back" class="w-6 h-6"></i>
-            </button>
-            <button id="btn-timer-play-pause" class="p-5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl transition shadow-xl shadow-emerald-500/20 active:scale-95">
-                <i id="icon-play-pause" data-lucide="pause" class="w-8 h-8 fill-current"></i>
-            </button>
-            <button id="btn-timer-next" class="p-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl transition active:scale-95">
-                <i data-lucide="skip-forward" class="w-6 h-6"></i>
-            </button>
+                <div class="text-left">
+                    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block">A continuación:</span>
+                    <span id="timer-next-exercise" class="text-xs font-bold text-slate-300">Siguiente ejercicio</span>
+                </div>
+            </div>
+
+            <div class="max-w-md mx-auto w-full flex items-center justify-center gap-4 mt-4">
+                <button id="btn-timer-prev" class="p-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl transition active:scale-95">
+                    <i data-lucide="skip-back" class="w-6 h-6"></i>
+                </button>
+                <button id="btn-timer-play-pause" class="p-5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl transition shadow-xl shadow-emerald-500/20 active:scale-95">
+                    <i id="icon-play-pause" data-lucide="pause" class="w-8 h-8 fill-current"></i>
+                </button>
+                <button id="btn-timer-next" class="p-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl transition active:scale-95">
+                    <i data-lucide="skip-forward" class="w-6 h-6"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -325,12 +332,13 @@
                 </div>
             </div>
 
-            <!-- FORM TO ADD NEW EXERCISE (Hidden by default) -->
+            <!-- FORM TO ADD / EDIT EXERCISE -->
             <div id="add-exercise-form" class="hidden mb-4 p-4 bg-slate-900 border border-emerald-500/30 rounded-xl space-y-3">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    Cargar Nuevo Ejercicio al Banco
+                <h4 id="form-title" class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    <span id="form-title-text">Cargar Nuevo Ejercicio al Banco</span>
                 </h4>
+                <input type="hidden" id="input-ex-id" value="">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Nombre del Ejercicio</label>
@@ -519,6 +527,14 @@
         const btnTimerDoneReps = document.getElementById('btn-timer-done-reps');
         const timerCircleBg = document.getElementById('timer-circle-bg');
 
+        // Library & Exercise Edit Elements
+        const btnOpenLibrary = document.getElementById('btn-open-library');
+        const btnCloseLibrary = document.getElementById('btn-close-library');
+        const libraryModal = document.getElementById('library-modal');
+        const libraryContent = document.getElementById('library-content');
+        const inputExId = document.getElementById('input-ex-id');
+        const formTitleText = document.getElementById('form-title-text');
+
         // Toggle Work Mode visibility
         selectWorkMode.addEventListener('change', () => {
             if (selectWorkMode.value === 'reps') {
@@ -541,6 +557,7 @@
         const inputExDesc = document.getElementById('input-ex-desc');
 
         btnToggleAddForm.addEventListener('click', () => {
+            clearAddForm();
             addExerciseForm.classList.toggle('hidden');
             if (!addExerciseForm.classList.contains('hidden')) {
                 inputExName.focus();
@@ -553,11 +570,14 @@
         });
 
         function clearAddForm() {
+            if (inputExId) inputExId.value = '';
             inputExName.value = '';
             inputExDesc.value = '';
+            if (formTitleText) formTitleText.textContent = "Cargar Nuevo Ejercicio al Banco";
         }
 
         btnSaveExercise.addEventListener('click', () => {
+            const exId = inputExId ? inputExId.value : '';
             const name = inputExName.value.trim();
             const zoneKey = selectExZone.value;
             const desc = inputExDesc.value.trim() || "Ejercicio personalizado cargado por el docente.";
@@ -567,22 +587,35 @@
                 return;
             }
 
-            const newEx = {
-                id: 'custom-' + Date.now(),
-                name: name,
-                desc: desc,
-                isCustom: true,
-                zoneKey: zoneKey
-            };
+            if (exId) {
+                // Modificar ejercicio existente
+                Object.keys(EXERCISE_DATABASE).forEach(z => {
+                    const idx = EXERCISE_DATABASE[z].list.findIndex(e => e.id === exId);
+                    if (idx !== -1) {
+                        const item = EXERCISE_DATABASE[z].list.splice(idx, 1)[0];
+                        item.name = name;
+                        item.desc = desc;
+                        item.isEdited = true;
+                        EXERCISE_DATABASE[zoneKey].list.push(item);
+                    }
+                });
+                alertModal(`¡Ejercicio "${name}" actualizado con éxito!`);
+            } else {
+                // Nuevo ejercicio
+                const newEx = {
+                    id: 'custom-' + Date.now(),
+                    name: name,
+                    desc: desc,
+                    isCustom: true,
+                    zoneKey: zoneKey
+                };
+                EXERCISE_DATABASE[zoneKey].list.push(newEx);
+                alertModal(`¡Ejercicio "${name}" agregado con éxito!`);
+            }
 
-            // Save to state
-            EXERCISE_DATABASE[zoneKey].list.push(newEx);
+            // Persistir cambios
+            saveCustomExercises();
 
-            // Persist all customs
-            const allCustoms = getAllCustomExercises();
-            saveCustomExercises(allCustoms);
-
-            alertModal(`¡Ejercicio "${name}" agregado con éxito!`);
             clearAddForm();
             addExerciseForm.classList.add('hidden');
             
@@ -591,12 +624,41 @@
             lucide.createIcons();
         });
 
+        window.openEditExercise = function(zoneKey, exId) {
+            const ex = EXERCISE_DATABASE[zoneKey].list.find(item => item.id === exId);
+            if (!ex) return;
+
+            inputExId.value = ex.id;
+            inputExName.value = ex.name;
+            selectExZone.value = zoneKey;
+            inputExDesc.value = ex.desc;
+            if (formTitleText) formTitleText.textContent = "Editar Ejercicio";
+
+            addExerciseForm.classList.remove('hidden');
+            inputExName.focus();
+        };
+
+        function saveCustomExercises() {
+            try {
+                let customsAndEdits = [];
+                Object.keys(EXERCISE_DATABASE).forEach(zoneKey => {
+                    EXERCISE_DATABASE[zoneKey].list.forEach(ex => {
+                        if (ex.isCustom || ex.isEdited) {
+                            customsAndEdits.push({ ...ex, zoneKey });
+                        }
+                    });
+                });
+                localStorage.setItem('corepe_custom_exercises', JSON.stringify(customsAndEdits));
+            } catch (e) {
+                console.error("Error saving custom exercises:", e);
+            }
+        }
+
         window.deleteCustomExercise = function(exId) {
             Object.keys(EXERCISE_DATABASE).forEach(zoneKey => {
                 EXERCISE_DATABASE[zoneKey].list = EXERCISE_DATABASE[zoneKey].list.filter(ex => ex.id !== exId);
             });
-            const allCustoms = getAllCustomExercises();
-            saveCustomExercises(allCustoms);
+            saveCustomExercises();
             alertModal("Ejercicio eliminado.");
             renderLibrary();
             lucide.createIcons();
@@ -1014,18 +1076,25 @@
                             <div>
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="font-bold text-xs text-slate-200 block">${ex.name}</span>
-                                    ${ex.isCustom ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-medium border border-emerald-500/30">Personal</span>` : ''}
+                                    <div class="flex items-center gap-1">
+                                        ${ex.isCustom ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-medium border border-emerald-500/30">Personal</span>` : ''}
+                                        ${ex.isEdited ? `<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-medium border border-amber-500/30">Editado</span>` : ''}
+                                    </div>
                                 </div>
                                 <span class="text-[11px] text-slate-400 leading-tight block mt-1">${ex.desc}</span>
                             </div>
-                            ${ex.isCustom ? `
-                                <div class="mt-2 pt-1 border-t border-slate-800 flex justify-end">
+                            <div class="mt-2 pt-1 border-t border-slate-800 flex justify-end gap-2">
+                                <button onclick="openEditExercise('${key}', '${ex.id}')" class="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+                                    <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                    Editar
+                                </button>
+                                ${ex.isCustom ? `
                                     <button onclick="deleteCustomExercise('${ex.id}')" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition">
                                         <i data-lucide="trash-2" class="w-3 h-3"></i>
                                         Eliminar
                                     </button>
-                                </div>
-                            ` : ''}
+                                ` : ''}
+                            </div>
                         </div>
                     `;
                 });
