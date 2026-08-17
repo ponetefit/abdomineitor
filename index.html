@@ -59,7 +59,7 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1.5">Formato de la Clase / Circuito</label>
                         <select id="select-format" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition">
                             <option value="6_zones">1. Circuito Completo (6 ej - 1 de cada zona)</option>
-                            <option value="8_zones">2. Circuito Extendido (8 ej - todos los bloques)</option>
+                            <option value="8_zones">2. Circuito Extendido (1 ej de cada bloque)</option>
                             <option value="3_plus_lumbar">3. Enfoque Zona (3 de misma zona + 1 Lumbar/Plancha)</option>
                             <option value="2_plus_lumbar">4. Enfoque Rápido (2 de misma zona + 1 Lumbar/Plancha)</option>
                             <option value="2_zones_split">5. Doble Zona (4 ej: 2 Zonas distintas)</option>
@@ -71,10 +71,11 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1.5">Zona Principal a Enfocar</label>
                         <select id="select-target-zone" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition">
                             <option value="recto_corto">Abs Rectos Cortos (Crunches superior)</option>
-                            <option value="recto_largo">Abs Rectos Largos (Sit-ups / Integrales)</option>
+                            <option value="recto_largo">Abs Recto Largo</option>
+                            <option value="integrales">Abdominales Integrales</option>
                             <option value="inferiores">Abs Inferiores (Elevación de piernas)</option>
-                            <option value="laterales">Abs Oblicuos / Laterales</option>
-                            <option value="core_dinamico">Core Dinámico / Anti-Rotación</option>
+                            <option value="oblicuos">Oblicuos</option>
+                            <option value="laterales">Laterales</option>
                             <option value="cardio_core">Cardio Abdominal / HIIT</option>
                         </select>
                     </div>
@@ -84,10 +85,11 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1.5">Segunda Zona a Combinar</label>
                         <select id="select-second-zone" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition">
                             <option value="inferiores">Abs Inferiores</option>
-                            <option value="laterales">Abs Oblicuos / Laterales</option>
+                            <option value="oblicuos">Oblicuos</option>
+                            <option value="laterales">Laterales</option>
                             <option value="recto_corto">Abs Rectos Cortos</option>
-                            <option value="recto_largo">Abs Rectos Largos</option>
-                            <option value="core_dinamico">Core Dinámico / Anti-Rotación</option>
+                            <option value="recto_largo">Abs Recto Largo</option>
+                            <option value="integrales">Abdominales Integrales</option>
                             <option value="cardio_core">Cardio Abdominal / HIIT</option>
                         </select>
                     </div>
@@ -344,12 +346,13 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1">Zona Abdominal / Lumbar</label>
                         <select id="select-ex-zone" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
                             <option value="recto_corto">Abs Rectos Cortos</option>
-                            <option value="recto_largo">Abs Rectos Largos / Integrales</option>
+                            <option value="recto_largo">Abs Recto Largo</option>
+                            <option value="integrales">Abdominales Integrales</option>
                             <option value="inferiores">Abs Inferiores</option>
-                            <option value="laterales">Oblicuos / Laterales</option>
-                            <option value="planchas">Planchas / Anti-Extensión</option>
+                            <option value="oblicuos">Oblicuos</option>
+                            <option value="laterales">Laterales</option>
+                            <option value="planchas">Planchas Frontales</option>
                             <option value="espinales">Espinales / Lumbar</option>
-                            <option value="core_dinamico">Core Dinámico / Anti-Rotación</option>
                             <option value="cardio_core">Cardio Abdominal / HIIT</option>
                         </select>
                     </div>
@@ -384,13 +387,19 @@
                 ]
             },
             recto_largo: {
-                name: "Abs Recto Largo / Integrales",
+                name: "Abs Recto Largo",
                 badgeBg: "bg-teal-500/10 text-teal-400 border-teal-500/30",
                 list: [
-                    { id: "default-rl-1", name: "Sit-Ups Completos (Mariposa)", desc: "Subida completa desde suelo hasta tocar pies, espalda derecha al final.", isCustom: false },
-                    { id: "default-rl-2", name: "Navajas / V-Ups", desc: "Elevar simultáneamente tronco y piernas extendidas hasta tocar puntas.", isCustom: false },
                     { id: "default-rl-3", name: "Crunch Bisagra Alterno", desc: "Flexión de cadera y tronco uniendo mano con pie opuesto.", isCustom: false },
                     { id: "default-rl-4", name: "Roll-Up Controlado", desc: "Subida y bajada articulando vértebra por vértebra sin impulso.", isCustom: false }
+                ]
+            },
+            integrales: {
+                name: "Abdominales Integrales",
+                badgeBg: "bg-sky-500/10 text-sky-400 border-sky-500/30",
+                list: [
+                    { id: "default-int-1", name: "Sit-Ups Completos (Mariposa)", desc: "Subida completa desde suelo hasta tocar pies, espalda derecha al final.", isCustom: false },
+                    { id: "default-int-2", name: "Navajas / V-Ups", desc: "Elevar simultáneamente tronco y piernas extendidas hasta tocar puntas.", isCustom: false }
                 ]
             },
             inferiores: {
@@ -403,18 +412,25 @@
                     { id: "default-inf-4", name: "Flutter Kicks (Aleteo)", desc: "Patada corta y rápida alternada manteniendo la curvatura lumbar neutra.", isCustom: false }
                 ]
             },
+            oblicuos: {
+                name: "Oblicuos",
+                badgeBg: "bg-violet-500/10 text-violet-400 border-violet-500/30",
+                list: [
+                    { id: "default-obl-1", name: "Crunch Oblicuo Toca Tobillos", desc: "Inclinación lateral flexionando tronco para tocar talón del mismo lado.", isCustom: false },
+                    { id: "default-obl-2", name: "Bicicleta (Bicycle Crunch)", desc: "Rotación del torso llevando codo a rodilla opuesta alternadamente.", isCustom: false },
+                    { id: "default-obl-3", name: "Limpiaparabrisas (Wipers) con Rodillas Flex", desc: "Girar rodillas de lado a lado manteniendo hombros pegados al suelo.", isCustom: false }
+                ]
+            },
             laterales: {
-                name: "Oblicuos / Laterales",
+                name: "Laterales",
                 badgeBg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
                 list: [
-                    { id: "default-lat-1", name: "Crunch Oblicuo Toca Tobillos", desc: "Inclinación lateral flexionando tronco para tocar talón del mismo lado.", isCustom: false },
-                    { id: "default-lat-2", name: "Bicicleta (Bicycle Crunch)", desc: "Rotación del torso llevando codo a rodilla opuesta alternadamente.", isCustom: false },
-                    { id: "default-lat-3", name: "Plancha Lateral con Elevación de Cadera", desc: "Sostener en antebrazo subiendo y bajando cadera rítmicamente.", isCustom: false },
-                    { id: "default-lat-4", name: "Limpiaparabrisas (Wipers) con Rodillas Flex", desc: "Girar rodillas de lado a lado manteniendo hombros pegados al suelo.", isCustom: false }
+                    { id: "default-lat-1", name: "Plancha Lateral con Elevación de Cadera", desc: "Sostener en antebrazo subiendo y bajando cadera rítmicamente.", isCustom: false },
+                    { id: "default-lat-2", name: "Plancha Lateral Estática", desc: "Sostener el cuerpo en línea recta apoyado en un antebrazo, cadera elevada y firme.", isCustom: false }
                 ]
             },
             planchas: {
-                name: "Planchas / Anti-Extensión",
+                name: "Planchas Frontales",
                 badgeBg: "bg-blue-500/10 text-blue-400 border-blue-500/30",
                 list: [
                     { id: "default-pl-1", name: "Plancha Frontal en Antebrazos", desc: "Alineación tobillo-cadera-hombro con contracción activa de glúteos.", isCustom: false },
@@ -431,16 +447,6 @@
                     { id: "default-esp-2", name: "Espinales Nado Simultáneo", desc: "Elevar pecho y piernas juntas sosteniendo 1 segundo arriba.", isCustom: false },
                     { id: "default-esp-3", name: "Espinales Manos en Nuca / W", desc: "Elevar torso llevando escápulas hacia atrás sin hiperextender cuello.", isCustom: false },
                     { id: "default-esp-4", name: "Extensión Lumbar en Cuadrupedia (Bird-Dog)", desc: "Extender brazo y pierna contraria buscando estabilidad del core.", isCustom: false }
-                ]
-            },
-            core_dinamico: {
-                name: "Core Dinámico / Anti-Rotación",
-                badgeBg: "bg-rose-500/10 text-rose-400 border-rose-500/30",
-                list: [
-                    { id: "default-cd-1", name: "Pallof Press", desc: "Empujar banda/mancuerna al frente resistiendo la rotación del tronco.", isCustom: false },
-                    { id: "default-cd-2", name: "Russian Twist", desc: "Rotación de tronco de lado a lado con tronco inclinado y pies elevados.", isCustom: false },
-                    { id: "default-cd-3", name: "Molinillo (Windmill) con Mancuerna", desc: "Bisagra de cadera lateral con brazo extendido hacia arriba, core estable.", isCustom: false },
-                    { id: "default-cd-4", name: "Dead Bug", desc: "Extender brazo y pierna opuesta manteniendo zona lumbar pegada al piso.", isCustom: false }
                 ]
             },
             cardio_core: {
@@ -731,7 +737,7 @@
                 });
 
             } else if (format === '8_zones') {
-                title = "Circuito Extendido (8 Bloques)";
+                title = "Circuito Extendido (Todos los Bloques)";
                 // 1 exercise from every zone in the database (including custom blocks added later)
                 Object.keys(EXERCISE_DATABASE).forEach(z => {
                     selectedExercises.push(getRandomExercise(z));
