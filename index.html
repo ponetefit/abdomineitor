@@ -59,9 +59,10 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1.5">Formato de la Clase / Circuito</label>
                         <select id="select-format" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition">
                             <option value="6_zones">1. Circuito Completo (6 ej - 1 de cada zona)</option>
-                            <option value="3_plus_lumbar">2. Enfoque Zona (3 de misma zona + 1 Lumbar/Plancha)</option>
-                            <option value="2_plus_lumbar">3. Enfoque Rápido (2 de misma zona + 1 Lumbar/Plancha)</option>
-                            <option value="2_zones_split">4. Doble Zona (4 ej: 2 Zonas distintas)</option>
+                            <option value="8_zones">2. Circuito Extendido (8 ej - todos los bloques)</option>
+                            <option value="3_plus_lumbar">3. Enfoque Zona (3 de misma zona + 1 Lumbar/Plancha)</option>
+                            <option value="2_plus_lumbar">4. Enfoque Rápido (2 de misma zona + 1 Lumbar/Plancha)</option>
+                            <option value="2_zones_split">5. Doble Zona (4 ej: 2 Zonas distintas)</option>
                         </select>
                     </div>
 
@@ -73,6 +74,8 @@
                             <option value="recto_largo">Abs Rectos Largos (Sit-ups / Integrales)</option>
                             <option value="inferiores">Abs Inferiores (Elevación de piernas)</option>
                             <option value="laterales">Abs Oblicuos / Laterales</option>
+                            <option value="core_dinamico">Core Dinámico / Anti-Rotación</option>
+                            <option value="cardio_core">Cardio Abdominal / HIIT</option>
                         </select>
                     </div>
 
@@ -84,6 +87,8 @@
                             <option value="laterales">Abs Oblicuos / Laterales</option>
                             <option value="recto_corto">Abs Rectos Cortos</option>
                             <option value="recto_largo">Abs Rectos Largos</option>
+                            <option value="core_dinamico">Core Dinámico / Anti-Rotación</option>
+                            <option value="cardio_core">Cardio Abdominal / HIIT</option>
                         </select>
                     </div>
 
@@ -97,7 +102,7 @@
                             </select>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
+                        <div>
                             <!-- Container for Work Time -->
                             <div id="work-time-container">
                                 <label class="block text-xs font-medium text-slate-400 mb-1">Trabajo (seg)</label>
@@ -120,15 +125,6 @@
                                     <option value="25">25 Reps</option>
                                 </select>
                             </div>
-
-                            <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1">Descanso (seg)</label>
-                                <select id="select-rest-time" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200">
-                                    <option value="15">15 seg</option>
-                                    <option value="20" selected>20 seg (Recomendado)</option>
-                                    <option value="30">30 seg</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
 
@@ -142,7 +138,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1">Pausa entre Vueltas</label>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Pausa entre Circuitos</label>
                             <select id="select-round-rest" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200">
                                 <option value="60" selected>60 seg</option>
                                 <option value="90">90 seg</option>
@@ -353,6 +349,8 @@
                             <option value="laterales">Oblicuos / Laterales</option>
                             <option value="planchas">Planchas / Anti-Extensión</option>
                             <option value="espinales">Espinales / Lumbar</option>
+                            <option value="core_dinamico">Core Dinámico / Anti-Rotación</option>
+                            <option value="cardio_core">Cardio Abdominal / HIIT</option>
                         </select>
                     </div>
                 </div>
@@ -434,6 +432,26 @@
                     { id: "default-esp-3", name: "Espinales Manos en Nuca / W", desc: "Elevar torso llevando escápulas hacia atrás sin hiperextender cuello.", isCustom: false },
                     { id: "default-esp-4", name: "Extensión Lumbar en Cuadrupedia (Bird-Dog)", desc: "Extender brazo y pierna contraria buscando estabilidad del core.", isCustom: false }
                 ]
+            },
+            core_dinamico: {
+                name: "Core Dinámico / Anti-Rotación",
+                badgeBg: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+                list: [
+                    { id: "default-cd-1", name: "Pallof Press", desc: "Empujar banda/mancuerna al frente resistiendo la rotación del tronco.", isCustom: false },
+                    { id: "default-cd-2", name: "Russian Twist", desc: "Rotación de tronco de lado a lado con tronco inclinado y pies elevados.", isCustom: false },
+                    { id: "default-cd-3", name: "Molinillo (Windmill) con Mancuerna", desc: "Bisagra de cadera lateral con brazo extendido hacia arriba, core estable.", isCustom: false },
+                    { id: "default-cd-4", name: "Dead Bug", desc: "Extender brazo y pierna opuesta manteniendo zona lumbar pegada al piso.", isCustom: false }
+                ]
+            },
+            cardio_core: {
+                name: "Cardio Abdominal / HIIT",
+                badgeBg: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30",
+                list: [
+                    { id: "default-cc-1", name: "Mountain Climbers", desc: "Llevar rodillas al pecho alternadamente en posición de plancha alta.", isCustom: false },
+                    { id: "default-cc-2", name: "Plank Jacks", desc: "Saltar abriendo y cerrando piernas manteniendo la posición de plancha.", isCustom: false },
+                    { id: "default-cc-3", name: "Burpee sin Salto + Crunch", desc: "Bajar a plancha, crunch de rodillas al pecho y volver a subir.", isCustom: false },
+                    { id: "default-cc-4", name: "Skater Abdominal", desc: "Salto lateral tipo patinador con toque de mano al piso, core activo.", isCustom: false }
+                ]
             }
         };
 
@@ -489,11 +507,10 @@
             totalRounds: 4,
             exerciseIndex: 0,
             secondsLeft: 40,
-            mode: 'WORK', // 'WARMUP', 'WORK', 'REST', 'ROUND_REST', 'COOLDOWN'
+            mode: 'WORK', // 'WARMUP', 'WORK', 'ROUND_REST', 'COOLDOWN'
             workMode: 'time', // 'time' or 'reps'
             workTime: 40,
             repsCount: 15,
-            restTime: 20,
             roundRestTime: 60
         };
 
@@ -713,6 +730,13 @@
                     selectedExercises.push(getRandomExercise(z));
                 });
 
+            } else if (format === '8_zones') {
+                title = "Circuito Extendido (8 Bloques)";
+                // 1 exercise from every zone in the database (including custom blocks added later)
+                Object.keys(EXERCISE_DATABASE).forEach(z => {
+                    selectedExercises.push(getRandomExercise(z));
+                });
+
             } else if (format === '3_plus_lumbar') {
                 const zoneName = EXERCISE_DATABASE[targetZone].name;
                 title = `Enfoque: ${zoneName} (3) + Lumbar/Plancha`;
@@ -814,12 +838,11 @@
         function updateTimingSummary() {
             const workMode = selectWorkMode.value;
             const workSec = workMode === 'reps' ? parseInt(selectWorkReps.value) * 3 : parseInt(selectWorkTime.value); // ~3s per rep estimate
-            const restSec = parseInt(document.getElementById('select-rest-time').value);
             const rounds = parseInt(document.getElementById('select-rounds').value);
             const roundRest = parseInt(document.getElementById('select-round-rest').value);
 
             const numExercises = currentRoutine.length;
-            const singleRoundTimeSec = (numExercises * workSec) + ((numExercises - 1) * restSec);
+            const singleRoundTimeSec = numExercises * workSec;
             const totalWorkoutsSec = (singleRoundTimeSec * rounds) + ((rounds - 1) * roundRest);
             
             const mainMin = Math.round(totalWorkoutsSec / 60);
@@ -848,7 +871,7 @@
         btnGenerate.addEventListener('click', generateRoutine);
         btnShuffle.addEventListener('click', generateRoutine);
 
-        ['select-work-time', 'select-work-reps', 'select-rest-time', 'select-rounds', 'select-round-rest'].forEach(id => {
+        ['select-work-time', 'select-work-reps', 'select-rounds', 'select-round-rest'].forEach(id => {
             document.getElementById(id).addEventListener('change', updateTimingSummary);
         });
 
@@ -858,7 +881,6 @@
             const workMode = selectWorkMode.value;
             const workTime = parseInt(selectWorkTime.value);
             const repsCount = parseInt(selectWorkReps.value);
-            const rest = parseInt(document.getElementById('select-rest-time').value);
             const rounds = parseInt(document.getElementById('select-rounds').value);
             const roundRest = parseInt(document.getElementById('select-round-rest').value);
 
@@ -871,7 +893,6 @@
                 workMode: workMode,
                 workTime: workTime,
                 repsCount: repsCount,
-                restTime: rest,
                 roundRestTime: roundRest
             };
 
@@ -931,8 +952,8 @@
             if (timerState.mode === 'WORK') {
                 // Check if last exercise of the round
                 if (timerState.exerciseIndex < currentRoutine.length - 1) {
-                    timerState.mode = 'REST';
-                    timerState.secondsLeft = timerState.restTime;
+                    timerState.exerciseIndex++;
+                    timerState.secondsLeft = timerState.workMode === 'reps' ? timerState.repsCount : timerState.workTime;
                 } else {
                     // Last exercise of round
                     if (timerState.round < timerState.totalRounds) {
@@ -946,10 +967,6 @@
                         return;
                     }
                 }
-            } else if (timerState.mode === 'REST') {
-                timerState.mode = 'WORK';
-                timerState.exerciseIndex++;
-                timerState.secondsLeft = timerState.workMode === 'reps' ? timerState.repsCount : timerState.workTime;
             } else if (timerState.mode === 'ROUND_REST') {
                 timerState.mode = 'WORK';
                 timerState.round++;
@@ -980,7 +997,7 @@
                 
                 exerciseZone.textContent = currentEx.zoneName;
                 exerciseName.textContent = currentEx.name;
-                nextExerciseLabel.textContent = (timerState.exerciseIndex === currentRoutine.length - 1) ? "Pausa entre Series" : nextEx.name;
+                nextExerciseLabel.textContent = (timerState.exerciseIndex === currentRoutine.length - 1) ? "Pausa entre Circuitos" : nextEx.name;
 
                 if (timerState.workMode === 'reps') {
                     timerSeconds.textContent = timerState.repsCount;
@@ -992,25 +1009,13 @@
                     btnTimerDoneReps.classList.add('hidden');
                 }
 
-            } else if (timerState.mode === 'REST') {
-                btnTimerDoneReps.classList.add('hidden');
-                badge.textContent = "DESCANSO";
-                badge.className = "bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold px-3 py-1 rounded-full text-sm";
-                circleBg.className = "w-64 h-64 sm:w-80 sm:h-80 rounded-full border-8 border-blue-500 flex flex-col items-center justify-center bg-slate-900/80 shadow-2xl transition-colors duration-300";
-
-                exerciseZone.textContent = "RECUPERACIÓN";
-                exerciseName.textContent = "¡Descansa y Prepárate!";
-                timerSeconds.textContent = timerState.secondsLeft;
-                timerLabel.textContent = "SEGUNDOS";
-                nextExerciseLabel.textContent = nextEx.name;
-
             } else if (timerState.mode === 'ROUND_REST') {
                 btnTimerDoneReps.classList.add('hidden');
-                badge.textContent = "MACRO PAUSA";
+                badge.textContent = "PAUSA ENTRE CIRCUITOS";
                 badge.className = "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold px-3 py-1 rounded-full text-sm";
                 circleBg.className = "w-64 h-64 sm:w-80 sm:h-80 rounded-full border-8 border-amber-500 flex flex-col items-center justify-center bg-slate-900/80 shadow-2xl transition-colors duration-300";
 
-                exerciseZone.textContent = "FIN DE SERIE";
+                exerciseZone.textContent = "FIN DE CIRCUITO";
                 exerciseName.textContent = "Hidratación & Pausa Larga";
                 timerSeconds.textContent = timerState.secondsLeft;
                 timerLabel.textContent = "SEGUNDOS";
@@ -1053,6 +1058,12 @@
             updateTimerDisplay();
         });
 
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
         function renderLibrary() {
             libraryContent.innerHTML = '';
             Object.keys(EXERCISE_DATABASE).forEach(key => {
@@ -1064,7 +1075,7 @@
                     <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-slate-800 pb-1">
                         <span class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                            ${zone.name} (${zone.list.length})
+                            ${escapeHtml(zone.name)} (${zone.list.length})
                         </span>
                     </h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1075,21 +1086,21 @@
                         <div class="bg-slate-900 border ${ex.isCustom ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-slate-800'} p-3 rounded-xl flex flex-col justify-between relative group">
                             <div>
                                 <div class="flex items-center justify-between gap-2">
-                                    <span class="font-bold text-xs text-slate-200 block">${ex.name}</span>
+                                    <span class="font-bold text-xs text-slate-200 block">${escapeHtml(ex.name)}</span>
                                     <div class="flex items-center gap-1">
                                         ${ex.isCustom ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-medium border border-emerald-500/30">Personal</span>` : ''}
                                         ${ex.isEdited ? `<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-medium border border-amber-500/30">Editado</span>` : ''}
                                     </div>
                                 </div>
-                                <span class="text-[11px] text-slate-400 leading-tight block mt-1">${ex.desc}</span>
+                                <span class="text-[11px] text-slate-400 leading-tight block mt-1">${escapeHtml(ex.desc)}</span>
                             </div>
                             <div class="mt-2 pt-1 border-t border-slate-800 flex justify-end gap-2">
-                                <button onclick="openEditExercise('${key}', '${ex.id}')" class="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+                                <button type="button" data-action="edit" data-zone="${escapeHtml(key)}" data-id="${escapeHtml(ex.id)}" class="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
                                     <i data-lucide="edit-3" class="w-3 h-3"></i>
                                     Editar
                                 </button>
                                 ${ex.isCustom ? `
-                                    <button onclick="deleteCustomExercise('${ex.id}')" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition">
+                                    <button type="button" data-action="delete" data-id="${escapeHtml(ex.id)}" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition">
                                         <i data-lucide="trash-2" class="w-3 h-3"></i>
                                         Eliminar
                                     </button>
@@ -1103,7 +1114,21 @@
                 section.innerHTML = html;
                 libraryContent.appendChild(section);
             });
+            lucide.createIcons();
         }
+
+        // Event delegation: handles clicks on Editar / Eliminar buttons
+        // even though they're re-created every time renderLibrary() runs.
+        libraryContent.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            if (action === 'edit') {
+                openEditExercise(btn.dataset.zone, btn.dataset.id);
+            } else if (action === 'delete') {
+                deleteCustomExercise(btn.dataset.id);
+            }
+        });
 
         btnOpenLibrary.addEventListener('click', () => {
             renderLibrary();
