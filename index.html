@@ -466,13 +466,21 @@
 
         function loadCustomExercises() {
             try {
+                // Reset to a clean copy of the defaults
+                EXERCISE_DATABASE = JSON.parse(JSON.stringify(DEFAULT_EXERCISE_DATABASE));
+
+                // Remove any default exercises the user deleted previously
+                const deletedIds = getDeletedDefaultIds();
+                if (deletedIds.length > 0) {
+                    Object.keys(EXERCISE_DATABASE).forEach(zoneKey => {
+                        EXERCISE_DATABASE[zoneKey].list = EXERCISE_DATABASE[zoneKey].list.filter(ex => !deletedIds.includes(ex.id));
+                    });
+                }
+
+                // Merge custom / edited items saved previously
                 const saved = localStorage.getItem('corepe_custom_exercises');
                 if (saved) {
                     const customList = JSON.parse(saved);
-                    // Reset to clean copy of defaults
-                    EXERCISE_DATABASE = JSON.parse(JSON.stringify(DEFAULT_EXERCISE_DATABASE));
-                    
-                    // Merge custom items
                     customList.forEach(item => {
                         if (EXERCISE_DATABASE[item.zoneKey]) {
                             EXERCISE_DATABASE[item.zoneKey].list.push(item);
@@ -481,6 +489,27 @@
                 }
             } catch (e) {
                 console.error("Error loading custom exercises:", e);
+            }
+        }
+
+        function getDeletedDefaultIds() {
+            try {
+                const raw = localStorage.getItem('corepe_deleted_defaults');
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function addDeletedDefaultId(exId) {
+            try {
+                const ids = getDeletedDefaultIds();
+                if (!ids.includes(exId)) {
+                    ids.push(exId);
+                    localStorage.setItem('corepe_deleted_defaults', JSON.stringify(ids));
+                }
+            } catch (e) {
+                console.error("Error saving deleted default exercise:", e);
             }
         }
 
@@ -677,14 +706,27 @@
             }
         }
 
-        window.deleteCustomExercise = function(exId) {
+        window.deleteExercise = function(exId) {
+            if (!confirm("¿Seguro que querés eliminar este ejercicio del banco?")) return;
+
+            let wasDefault = false;
             Object.keys(EXERCISE_DATABASE).forEach(zoneKey => {
-                EXERCISE_DATABASE[zoneKey].list = EXERCISE_DATABASE[zoneKey].list.filter(ex => ex.id !== exId);
+                EXERCISE_DATABASE[zoneKey].list = EXERCISE_DATABASE[zoneKey].list.filter(ex => {
+                    if (ex.id === exId) {
+                        if (!ex.isCustom) wasDefault = true;
+                        return false;
+                    }
+                    return true;
+                });
             });
+
+            if (wasDefault) {
+                addDeletedDefaultId(exId);
+            }
+
             saveCustomExercises();
             alertModal("Ejercicio eliminado.");
             renderLibrary();
-            lucide.createIcons();
         };
 
         // Audio Beep using Web Audio API
@@ -1105,12 +1147,10 @@
                                     <i data-lucide="edit-3" class="w-3 h-3"></i>
                                     Editar
                                 </button>
-                                ${ex.isCustom ? `
-                                    <button type="button" data-action="delete" data-id="${escapeHtml(ex.id)}" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition">
-                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
-                                        Eliminar
-                                    </button>
-                                ` : ''}
+                                <button type="button" data-action="delete" data-id="${escapeHtml(ex.id)}" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                    Eliminar
+                                </button>
                             </div>
                         </div>
                     `;
@@ -1132,7 +1172,7 @@
             if (action === 'edit') {
                 openEditExercise(btn.dataset.zone, btn.dataset.id);
             } else if (action === 'delete') {
-                deleteCustomExercise(btn.dataset.id);
+                deleteExercise(btn.dataset.id);
             }
         });
 
