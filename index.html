@@ -39,7 +39,10 @@
         .bottom-nav-btn.active .nav-dot { opacity: 1; transform: scale(1); }
         .nav-dot { opacity: 0; transform: scale(0.5); transition: all .2s ease; }
 
-        /* Mobile screen tabs: shown one at a time below lg breakpoint */
+        /* Bigger, easier-to-read text on small phones */
+        @media (max-width: 767px) {
+            html { font-size: 18px; }
+        }
         @media (max-width: 1023px) {
             .app-screen { display: none !important; }
             .app-screen.active-screen { display: flex !important; }
@@ -279,17 +282,17 @@
     <nav id="bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex items-stretch">
         <button type="button" data-screen="screen-config" class="bottom-nav-btn active flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-slate-400 transition">
             <i data-lucide="sliders" class="w-5 h-5"></i>
-            <span class="text-[11px] font-semibold">Configurar</span>
+            <span class="text-[13px] font-semibold">Configurar</span>
             <span class="nav-dot w-1 h-1 rounded-full bg-emerald-400"></span>
         </button>
         <button type="button" data-screen="screen-routine" class="bottom-nav-btn flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-slate-400 transition">
             <i data-lucide="list-checks" class="w-5 h-5"></i>
-            <span class="text-[11px] font-semibold">Rutina</span>
+            <span class="text-[13px] font-semibold">Rutina</span>
             <span class="nav-dot w-1 h-1 rounded-full bg-emerald-400"></span>
         </button>
         <button type="button" id="btn-open-library-mobile" class="bottom-nav-btn flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-slate-400 transition">
             <i data-lucide="book-open" class="w-5 h-5"></i>
-            <span class="text-[11px] font-semibold">Banco</span>
+            <span class="text-[13px] font-semibold">Banco</span>
             <span class="nav-dot w-1 h-1 rounded-full bg-emerald-400"></span>
         </button>
     </nav>
@@ -340,7 +343,7 @@
             <!-- Next Exercise Preview -->
             <div class="mt-4 bg-slate-900/80 border border-slate-800 px-5 py-3 rounded-2xl flex items-center gap-3 max-w-md w-full justify-between">
                 <div class="text-left">
-                    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block">A continuación:</span>
+                    <span class="text-[12px] uppercase tracking-wider text-slate-500 font-semibold block">A continuación:</span>
                     <span id="timer-next-exercise" class="text-xs font-bold text-slate-300">Siguiente ejercicio</span>
                 </div>
             </div>
@@ -914,10 +917,10 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex flex-wrap items-center gap-2 mb-1">
                             <span class="font-bold text-slate-100 text-sm group-hover:text-emerald-400 transition">${ex.name}</span>
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${ex.badgeBg}">
+                            <span class="text-[12px] font-semibold px-2 py-0.5 rounded-full border ${ex.badgeBg}">
                                 ${ex.zoneName}
                             </span>
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 ml-auto">
+                            <span class="text-[12px] font-semibold px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 ml-auto">
                                 ${targetVal}
                             </span>
                         </div>
@@ -1184,18 +1187,18 @@
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="font-bold text-xs text-slate-200 block">${escapeHtml(ex.name)}</span>
                                     <div class="flex items-center gap-1">
-                                        ${ex.isCustom ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-medium border border-emerald-500/30">Personal</span>` : ''}
-                                        ${ex.isEdited ? `<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-medium border border-amber-500/30">Editado</span>` : ''}
+                                        ${ex.isCustom ? `<span class="text-[13px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-medium border border-emerald-500/30">Personal</span>` : ''}
+                                        ${ex.isEdited ? `<span class="text-[13px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-medium border border-amber-500/30">Editado</span>` : ''}
                                     </div>
                                 </div>
-                                <span class="text-[11px] text-slate-400 leading-tight block mt-1">${escapeHtml(ex.desc)}</span>
+                                <span class="text-[13px] text-slate-400 leading-tight block mt-1">${escapeHtml(ex.desc)}</span>
                             </div>
                             <div class="mt-2 pt-1 border-t border-slate-800 flex justify-end gap-2">
-                                <button type="button" data-action="edit" data-zone="${escapeHtml(key)}" data-id="${escapeHtml(ex.id)}" class="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+                                <button type="button" data-action="edit" data-zone="${escapeHtml(key)}" data-id="${escapeHtml(ex.id)}" class="text-[12px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
                                     <i data-lucide="edit-3" class="w-3 h-3"></i>
                                     Editar
                                 </button>
-                                <button type="button" data-action="delete" data-id="${escapeHtml(ex.id)}" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition">
+                                <button type="button" data-action="delete" data-id="${escapeHtml(ex.id)}" class="text-[12px] text-red-400 hover:text-red-300 flex items-center gap-1 transition">
                                     <i data-lucide="trash-2" class="w-3 h-3"></i>
                                     Eliminar
                                 </button>
