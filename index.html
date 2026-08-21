@@ -65,12 +65,36 @@
                 </div>
             </div>
 
-            <button id="btn-open-library" class="hidden lg:flex text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-2 rounded-lg border border-slate-700 transition items-center gap-1.5">
-                <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
-                <span>Banco de Ejercicios</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button id="btn-install-app" class="hidden text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-lg transition items-center gap-1.5 shadow-lg shadow-amber-500/20">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Descargar App</span>
+                </button>
+                <button id="btn-open-library" class="hidden lg:flex text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-2 rounded-lg border border-slate-700 transition items-center gap-1.5">
+                    <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Banco de Ejercicios</span>
+                </button>
+            </div>
         </div>
     </header>
+
+    <!-- iOS install instructions modal -->
+    <div id="ios-install-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 shadow-2xl">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="bg-amber-500/10 text-amber-400 p-2.5 rounded-xl border border-amber-500/20">
+                    <i data-lucide="share" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-bold text-white">Instalar Abdomineitor</h3>
+            </div>
+            <ol class="text-sm text-slate-300 space-y-2 list-decimal list-inside">
+                <li>Tocá el botón <span class="font-semibold text-white">Compartir</span> <i data-lucide="share" class="w-3.5 h-3.5 inline text-slate-400"></i> en Safari</li>
+                <li>Elegí <span class="font-semibold text-white">"Agregar a pantalla de inicio"</span></li>
+                <li>Tocá <span class="font-semibold text-white">"Agregar"</span> y listo</li>
+            </ol>
+            <button id="btn-close-ios-install" class="mt-5 w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-xl transition">Entendido</button>
+        </div>
+    </div>
 
     <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 pb-24 lg:pb-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -1272,6 +1296,64 @@
                 });
             });
         }
+
+        // --- "Descargar App" (instalar como PWA) ---
+        const btnInstallApp = document.getElementById('btn-install-app');
+        const iosInstallModal = document.getElementById('ios-install-modal');
+        const btnCloseIosInstall = document.getElementById('btn-close-ios-install');
+        let deferredInstallPrompt = null;
+
+        function isStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true; // iOS Safari
+        }
+
+        function isIOS() {
+            return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+        }
+
+        if (!isStandalone()) {
+            if (isIOS()) {
+                // iOS Safari doesn't support beforeinstallprompt: show button with manual instructions
+                btnInstallApp.classList.remove('hidden');
+                btnInstallApp.classList.add('flex');
+            } else {
+                // Chrome/Edge/Android: wait for the browser's native install signal
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredInstallPrompt = e;
+                    btnInstallApp.classList.remove('hidden');
+                    btnInstallApp.classList.add('flex');
+                });
+            }
+        }
+
+        btnInstallApp.addEventListener('click', async () => {
+            if (isIOS()) {
+                iosInstallModal.classList.remove('hidden');
+                lucide.createIcons();
+                return;
+            }
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            btnInstallApp.classList.add('hidden');
+            btnInstallApp.classList.remove('flex');
+            if (outcome === 'accepted') {
+                alertModal('¡App instalada! 💪');
+            }
+        });
+
+        btnCloseIosInstall.addEventListener('click', () => {
+            iosInstallModal.classList.add('hidden');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            btnInstallApp.classList.add('hidden');
+            btnInstallApp.classList.remove('flex');
+            deferredInstallPrompt = null;
+        });
 
         btnCloseLibrary.addEventListener('click', () => {
             libraryModal.classList.add('hidden');
