@@ -490,6 +490,10 @@
                         <span>Desconectar</span>
                     </button>
                 </div>
+                <button id="btn-merge-npoint" class="hidden w-full mt-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold rounded-lg text-xs border border-emerald-500/30 flex items-center justify-center gap-1.5">
+                    <i data-lucide="merge" class="w-3.5 h-3.5"></i>
+                    <span>Fusionar ahora (si los ejercicios no coinciden)</span>
+                </button>
                 <p id="npoint-status-text" class="text-[10px] text-slate-500 mt-2"></p>
             </div>
         </div>
@@ -662,6 +666,45 @@
             npointPollInterval = setInterval(() => pullFromNpoint(true), 12000);
         }
 
+        // Combina ejercicios locales + remotos sin perder ninguno (por id único)
+        function mergeSyncPayloads(localPayload, remotePayload) {
+            const localCustoms = (localPayload && localPayload.customExercises) || [];
+            const remoteCustoms = (remotePayload && remotePayload.customExercises) || [];
+            const merged = [...localCustoms];
+            remoteCustoms.forEach(rEx => {
+                if (!merged.find(ex => ex.id === rEx.id)) merged.push(rEx);
+            });
+            const mergedDeleted = Array.from(new Set([
+                ...((localPayload && localPayload.deletedDefaults) || []),
+                ...((remotePayload && remotePayload.deletedDefaults) || [])
+            ]));
+            return { customExercises: merged, deletedDefaults: mergedDeleted };
+        }
+
+        function getLocalSyncPayload() {
+            return {
+                customExercises: JSON.parse(localStorage.getItem('corepe_custom_exercises') || '[]'),
+                deletedDefaults: getDeletedDefaultIds()
+            };
+        }
+
+        function applyPayloadLocally(payload) {
+            localStorage.setItem('corepe_custom_exercises', JSON.stringify(payload.customExercises || []));
+            localStorage.setItem('corepe_deleted_defaults', JSON.stringify(payload.deletedDefaults || []));
+            loadCustomExercises();
+            if (typeof libraryModal !== 'undefined' && libraryModal && !libraryModal.classList.contains('hidden')) {
+                renderLibrary();
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function fetchRemotePayload() {
+            const res = await fetch(npointUrl(), { cache: 'no-store' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            return (data && Array.isArray(data.customExercises)) ? data : null; // null = bin vacío/sin nuestro formato todavía
+        }
+
         async function connectNpoint(rawInput) {
             const id = extractNpointId(rawInput);
             if (!id) {
@@ -671,10 +714,41 @@
             npointId = id;
             localStorage.setItem(NPOINT_ID_KEY, npointId);
             updateSyncBadge();
-            await pullFromNpoint();
+
+            try {
+                const remotePayload = await fetchRemotePayload();
+                const localPayload = getLocalSyncPayload();
+                const merged = remotePayload ? mergeSyncPayloads(localPayload, remotePayload) : localPayload;
+                applyingRemoteUpdate = true;
+                applyPayloadLocally(merged);
+                applyingRemoteUpdate = false;
+                await pushToNpoint(); // deja la nube al día con el resultado combinado
+            } catch (e) {
+                console.error("Error al conectar:", e);
+                alertModal("No se pudo conectar. Revisá tu conexión o la URL de npoint.io.");
+                return;
+            }
+
             startNpointPolling();
             refreshSyncModalUI();
-            alertModal("¡Sincronización automática activada! 🔄");
+            alertModal("¡Sincronización automática activada! Combiné los ejercicios de este dispositivo con los de la nube. 🔄");
+        }
+
+        async function mergeNpointNow() {
+            if (!isNpointConfigured()) return;
+            try {
+                const remotePayload = await fetchRemotePayload();
+                const localPayload = getLocalSyncPayload();
+                const merged = mergeSyncPayloads(localPayload, remotePayload || { customExercises: [], deletedDefaults: [] });
+                applyingRemoteUpdate = true;
+                applyPayloadLocally(merged);
+                applyingRemoteUpdate = false;
+                await pushToNpoint();
+                alertModal("¡Listo! Combiné los ejercicios de este dispositivo con los de la nube, sin perder ninguno. 🔄");
+            } catch (e) {
+                console.error("Error al fusionar:", e);
+                alertModal("No se pudo fusionar. Revisá tu conexión.");
+            }
         }
 
         function disconnectNpoint() {
@@ -699,6 +773,7 @@
                 input.disabled = true;
                 btnConnect.classList.add('hidden');
                 btnDisconnect.classList.remove('hidden');
+                document.getElementById('btn-merge-npoint').classList.remove('hidden');
                 instructions.classList.add('hidden');
                 statusText.textContent = "Conectado. Los cambios se sincronizan automáticamente en todos los dispositivos con esta misma URL.";
             } else {
@@ -706,6 +781,7 @@
                 input.disabled = false;
                 btnConnect.classList.remove('hidden');
                 btnDisconnect.classList.add('hidden');
+                document.getElementById('btn-merge-npoint').classList.add('hidden');
                 instructions.classList.remove('hidden');
                 statusText.textContent = '';
             }
@@ -733,6 +809,10 @@
         }
         if (btnDisconnectNpoint) {
             btnDisconnectNpoint.addEventListener('click', disconnectNpoint);
+        }
+        const btnMergeNpoint = document.getElementById('btn-merge-npoint');
+        if (btnMergeNpoint) {
+            btnMergeNpoint.addEventListener('click', mergeNpointNow);
         }
 
         // Active database merging default with local storage
