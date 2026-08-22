@@ -18,11 +18,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Firebase (sincronización entre dispositivos) -->
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <style>
         html, body { overscroll-behavior-y: none; }
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -400,9 +395,9 @@
                     <h3 class="text-lg font-bold text-white">Banco de Ejercicios por Zonas</h3>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="sync-status-badge" class="hidden items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700 transition">
-                        <i data-lucide="cloud-off" class="w-3.5 h-3.5"></i>
-                        <span>Sin sincronizar</span>
+                    <button id="btn-open-sync" class="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition">
+                        <i id="sync-status-icon" data-lucide="cloud-off" class="w-3.5 h-3.5"></i>
+                        <span id="sync-status-text">Sin sincronizar</span>
                     </button>
                     <button id="btn-toggle-add-form" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1 shadow-md shadow-emerald-500/20">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
@@ -453,6 +448,49 @@
             
             <div class="overflow-y-auto space-y-4 pr-1" id="library-content">
                 <!-- Dynamically filled with exercises by category -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SYNC MODAL: Sincronización automática entre dispositivos (npoint.io) -->
+    <div id="sync-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 safe-top safe-bottom">
+        <div class="glass-card max-w-lg w-full rounded-2xl p-6 border border-slate-800 max-h-[90vh] flex flex-col overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 text-emerald-400"></i>
+                    <h3 class="text-lg font-bold text-white">Sincronización Automática</h3>
+                </div>
+                <button id="btn-close-sync" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="sync-setup-instructions" class="mb-4 p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                <p class="text-xs text-slate-400 leading-relaxed mb-2">
+                    Para conectar tus dispositivos necesitás un "casillero" gratuito en <a href="https://www.npoint.io" target="_blank" rel="noopener" class="text-emerald-400 underline">npoint.io</a> (sin registro):
+                </p>
+                <ol class="text-xs text-slate-400 leading-relaxed list-decimal list-inside space-y-1">
+                    <li>Abrí <a href="https://www.npoint.io" target="_blank" rel="noopener" class="text-emerald-400 underline">npoint.io</a> y creá un bin nuevo.</li>
+                    <li>Copiá la URL que te da (ej: https://api.npoint.io/abc123).</li>
+                    <li>Pegala acá abajo y tocá "Conectar".</li>
+                    <li>Repetí el paso 3 en tus otros dispositivos con la <strong>misma URL</strong>.</li>
+                </ol>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">URL o ID de npoint.io</label>
+                <input type="text" id="npoint-id-input" placeholder="https://api.npoint.io/xxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                <div class="flex gap-2 mt-3">
+                    <button id="btn-connect-npoint" class="flex-1 px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5">
+                        <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                        <span>Conectar</span>
+                    </button>
+                    <button id="btn-disconnect-npoint" class="hidden flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs border border-slate-700 flex items-center justify-center gap-1.5">
+                        <i data-lucide="unlink" class="w-3.5 h-3.5"></i>
+                        <span>Desconectar</span>
+                    </button>
+                </div>
+                <p id="npoint-status-text" class="text-[10px] text-slate-500 mt-2"></p>
             </div>
         </div>
     </div>
@@ -546,161 +584,155 @@
         };
 
         // ============================================================
-        // SINCRONIZACIÓN ENTRE DISPOSITIVOS (Firebase Firestore)
+        // SINCRONIZACIÓN AUTOMÁTICA ENTRE DISPOSITIVOS (npoint.io)
         // ============================================================
-        // 1) Creá un proyecto gratis en https://console.firebase.google.com
-        // 2) Agregá una "Web app" y copiá el objeto de configuración acá abajo
-        // 3) Activá Firestore Database (modo producción) y Authentication > Anonymous
-        // 4) Reemplazá los valores de firebaseConfig por los tuyos
-        const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "TU_PROYECTO.firebaseapp.com",
-            projectId: "TU_PROYECTO",
-            storageBucket: "TU_PROYECTO.appspot.com",
-            messagingSenderId: "TU_SENDER_ID",
-            appId: "TU_APP_ID"
-        };
-
-        let db = null;
-        let syncEnabled = false;
-        let syncCode = localStorage.getItem('corepe_sync_code') || '';
-        let unsubscribeSync = null;
+        const NPOINT_ID_KEY = 'corepe_npoint_id';
+        let npointId = localStorage.getItem(NPOINT_ID_KEY) || '';
+        let npointPollInterval = null;
         let applyingRemoteUpdate = false; // evita re-subir mientras aplicamos datos que llegaron de otro dispositivo
 
-        function isFirebaseConfigured() {
-            return firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY";
+        function isNpointConfigured() {
+            return !!npointId;
         }
 
-        function initFirebase() {
-            if (!isFirebaseConfigured()) {
-                console.warn("Firebase no está configurado todavía: la sincronización entre dispositivos está desactivada.");
-                return false;
-            }
-            try {
-                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                return true;
-            } catch (e) {
-                console.error("Error inicializando Firebase:", e);
-                return false;
-            }
+        function npointUrl() {
+            return 'https://api.npoint.io/' + npointId;
+        }
+
+        function extractNpointId(input) {
+            return input.trim().replace(/^https?:\/\/(api\.)?npoint\.io\//, '').replace(/\/+$/, '');
         }
 
         function updateSyncBadge() {
-            const badge = document.getElementById('sync-status-badge');
-            if (!badge) return;
-            if (!isFirebaseConfigured()) {
-                badge.classList.add('hidden');
-                return;
-            }
-            badge.classList.remove('hidden');
-            badge.classList.add('flex');
-            if (syncEnabled) {
-                badge.innerHTML = '<i data-lucide="cloud" class="w-3.5 h-3.5"></i><span>Sincronizado (' + syncCode + ')</span>';
-                badge.className = "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 transition";
+            const icon = document.getElementById('sync-status-icon');
+            const text = document.getElementById('sync-status-text');
+            const btn = document.getElementById('btn-open-sync');
+            if (!icon || !text || !btn) return;
+            if (isNpointConfigured()) {
+                icon.setAttribute('data-lucide', 'cloud');
+                text.textContent = 'Sincronizado';
+                btn.className = "flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition";
             } else {
-                badge.innerHTML = '<i data-lucide="cloud-off" class="w-3.5 h-3.5"></i><span>Sin sincronizar</span>';
-                badge.className = "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700 transition";
+                icon.setAttribute('data-lucide', 'cloud-off');
+                text.textContent = 'Sin sincronizar';
+                btn.className = "flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition";
             }
             if (window.lucide) lucide.createIcons();
         }
 
-        async function connectSync(code) {
-            if (!db && !initFirebase()) {
-                alertModal("La sincronización todavía no está configurada en esta app.");
-                return;
-            }
+        async function pullFromNpoint(silent) {
+            if (!isNpointConfigured()) return;
             try {
-                await firebase.auth().signInAnonymously();
-            } catch (e) {
-                console.error("Error de autenticación:", e);
-                alertModal("No se pudo conectar. Revisá tu conexión a internet.");
-                return;
-            }
-
-            syncCode = code.trim().toUpperCase();
-            localStorage.setItem('corepe_sync_code', syncCode);
-
-            if (unsubscribeSync) unsubscribeSync();
-
-            const docRef = db.collection('abdomineitor_sync').doc(syncCode);
-
-            try {
-                const snap = await docRef.get();
-                if (!snap.exists) {
-                    // Primer dispositivo con este código: sube lo que ya tenía guardado localmente
-                    await docRef.set({
-                        customExercises: JSON.parse(localStorage.getItem('corepe_custom_exercises') || '[]'),
-                        deletedDefaults: getDeletedDefaultIds(),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-            } catch (e) {
-                console.error("Error consultando la nube:", e);
-                alertModal("No se pudo conectar a la nube. Revisá tu conexión.");
-                return;
-            }
-
-            unsubscribeSync = docRef.onSnapshot((doc) => {
-                if (!doc.exists) return;
-                const data = doc.data();
+                const res = await fetch(npointUrl(), { cache: 'no-store' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
                 applyingRemoteUpdate = true;
                 localStorage.setItem('corepe_custom_exercises', JSON.stringify(data.customExercises || []));
                 localStorage.setItem('corepe_deleted_defaults', JSON.stringify(data.deletedDefaults || []));
                 loadCustomExercises();
-                if (typeof libraryModal !== 'undefined' && !libraryModal.classList.contains('hidden')) {
+                if (typeof libraryModal !== 'undefined' && libraryModal && !libraryModal.classList.contains('hidden')) {
                     renderLibrary();
                 }
                 if (window.lucide) lucide.createIcons();
                 applyingRemoteUpdate = false;
-            }, (err) => {
-                console.error("Error de sincronización en tiempo real:", err);
-            });
-
-            syncEnabled = true;
-            updateSyncBadge();
-            alertModal('Sincronización activada con el código "' + syncCode + '" 🔄');
+            } catch (e) {
+                console.error("Error al sincronizar (descarga):", e);
+                if (!silent) alertModal("No se pudo sincronizar. Revisá tu conexión o la URL de npoint.io.");
+            }
         }
 
-        function disconnectSync() {
-            if (unsubscribeSync) unsubscribeSync();
-            unsubscribeSync = null;
-            syncEnabled = false;
-            localStorage.removeItem('corepe_sync_code');
-            syncCode = '';
+        async function pushToNpoint() {
+            if (!isNpointConfigured() || applyingRemoteUpdate) return;
+            try {
+                await fetch(npointUrl(), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customExercises: JSON.parse(localStorage.getItem('corepe_custom_exercises') || '[]'),
+                        deletedDefaults: getDeletedDefaultIds()
+                    })
+                });
+            } catch (e) {
+                console.error("Error al sincronizar (subida):", e);
+            }
+        }
+
+        function startNpointPolling() {
+            if (npointPollInterval) clearInterval(npointPollInterval);
+            npointPollInterval = setInterval(() => pullFromNpoint(true), 12000);
+        }
+
+        async function connectNpoint(rawInput) {
+            const id = extractNpointId(rawInput);
+            if (!id) {
+                alertModal("Pegá una URL o ID de npoint.io válido.");
+                return;
+            }
+            npointId = id;
+            localStorage.setItem(NPOINT_ID_KEY, npointId);
             updateSyncBadge();
+            await pullFromNpoint();
+            startNpointPolling();
+            refreshSyncModalUI();
+            alertModal("¡Sincronización automática activada! 🔄");
+        }
+
+        function disconnectNpoint() {
+            npointId = '';
+            localStorage.removeItem(NPOINT_ID_KEY);
+            if (npointPollInterval) clearInterval(npointPollInterval);
+            npointPollInterval = null;
+            updateSyncBadge();
+            refreshSyncModalUI();
             alertModal("Sincronización desactivada en este dispositivo.");
         }
 
-        async function pushSyncUpdate() {
-            if (!syncEnabled || !db || applyingRemoteUpdate) return;
-            try {
-                const docRef = db.collection('abdomineitor_sync').doc(syncCode);
-                await docRef.set({
-                    customExercises: JSON.parse(localStorage.getItem('corepe_custom_exercises') || '[]'),
-                    deletedDefaults: getDeletedDefaultIds(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (e) {
-                console.error("Error subiendo cambios a la nube:", e);
+        function refreshSyncModalUI() {
+            const input = document.getElementById('npoint-id-input');
+            const btnConnect = document.getElementById('btn-connect-npoint');
+            const btnDisconnect = document.getElementById('btn-disconnect-npoint');
+            const statusText = document.getElementById('npoint-status-text');
+            const instructions = document.getElementById('sync-setup-instructions');
+            if (!input) return;
+            if (isNpointConfigured()) {
+                input.value = npointId;
+                input.disabled = true;
+                btnConnect.classList.add('hidden');
+                btnDisconnect.classList.remove('hidden');
+                instructions.classList.add('hidden');
+                statusText.textContent = "Conectado. Los cambios se sincronizan automáticamente en todos los dispositivos con esta misma URL.";
+            } else {
+                input.value = '';
+                input.disabled = false;
+                btnConnect.classList.remove('hidden');
+                btnDisconnect.classList.add('hidden');
+                instructions.classList.remove('hidden');
+                statusText.textContent = '';
             }
         }
 
-        function openSyncPanel() {
-            if (!isFirebaseConfigured()) {
-                alertModal("La sincronización todavía no está configurada en esta app.");
-                return;
-            }
-            const msg = syncCode
-                ? 'Sincronización activa con el código: ' + syncCode + '\n\nIngresá un código nuevo para cambiarlo, dejá el campo vacío para DESCONECTAR, o cancelá para no hacer nada.'
-                : 'Ingresá un código de sincronización (el mismo en todos los dispositivos que querés conectar). Ej: PROFERAFA';
-            const input = prompt(msg, syncCode || "");
-            if (input === null) return; // canceló
-            if (input.trim() === "") {
-                if (syncCode) disconnectSync();
-                return;
-            }
-            connectSync(input);
+        const syncModal = document.getElementById('sync-modal');
+        const btnOpenSync = document.getElementById('btn-open-sync');
+        const btnCloseSync = document.getElementById('btn-close-sync');
+        const btnConnectNpoint = document.getElementById('btn-connect-npoint');
+        const btnDisconnectNpoint = document.getElementById('btn-disconnect-npoint');
+        const npointIdInput = document.getElementById('npoint-id-input');
+
+        if (btnOpenSync) {
+            btnOpenSync.addEventListener('click', () => {
+                refreshSyncModalUI();
+                syncModal.classList.remove('hidden');
+                lucide.createIcons();
+            });
+        }
+        if (btnCloseSync) {
+            btnCloseSync.addEventListener('click', () => syncModal.classList.add('hidden'));
+        }
+        if (btnConnectNpoint) {
+            btnConnectNpoint.addEventListener('click', () => connectNpoint(npointIdInput.value));
+        }
+        if (btnDisconnectNpoint) {
+            btnDisconnectNpoint.addEventListener('click', disconnectNpoint);
         }
 
         // Active database merging default with local storage
@@ -943,7 +975,7 @@
                     });
                 });
                 localStorage.setItem('corepe_custom_exercises', JSON.stringify(customsAndEdits));
-                pushSyncUpdate(); // Sube el cambio a la nube para que se vea en otros dispositivos
+                pushToNpoint(); // Sube el cambio para que se vea en los demás dispositivos conectados
             } catch (e) {
                 console.error("Error saving custom exercises:", e);
             }
@@ -1423,6 +1455,7 @@
             renderLibrary();
             lucide.createIcons();
             libraryModal.classList.remove('hidden');
+            pullFromNpoint(true); // Refresca desde la nube al abrir, por si hubo cambios en otro dispositivo
         });
 
         // Mobile "Banco" tab opens the same library modal
@@ -1432,6 +1465,7 @@
                 renderLibrary();
                 lucide.createIcons();
                 libraryModal.classList.remove('hidden');
+                pullFromNpoint(true);
             });
         }
 
@@ -1527,11 +1561,6 @@
             libraryModal.classList.add('hidden');
         });
 
-        const syncStatusBadge = document.getElementById('sync-status-badge');
-        if (syncStatusBadge) {
-            syncStatusBadge.addEventListener('click', openSyncPanel);
-        }
-
         // Simple Custom Alert
         function alertModal(msg) {
             const toast = document.createElement('div');
@@ -1547,10 +1576,11 @@
             lucide.createIcons();
             generateRoutine(); // First initial generate
 
-            // Sincronización entre dispositivos
-            if (initFirebase()) {
-                updateSyncBadge();
-                if (syncCode) connectSync(syncCode); // Reconecta automáticamente si ya había un código guardado
+            // Sincronización automática entre dispositivos
+            updateSyncBadge();
+            if (isNpointConfigured()) {
+                pullFromNpoint(true);
+                startNpointPolling();
             }
         };
     </script>
