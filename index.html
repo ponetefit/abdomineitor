@@ -18,6 +18,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Firebase (sincronización entre dispositivos) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <style>
         html, body { overscroll-behavior-y: none; }
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -395,6 +400,10 @@
                     <h3 class="text-lg font-bold text-white">Banco de Ejercicios por Zonas</h3>
                 </div>
                 <div class="flex items-center gap-2">
+                    <button id="sync-status-badge" class="hidden items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700 transition">
+                        <i data-lucide="cloud-off" class="w-3.5 h-3.5"></i>
+                        <span>Sin sincronizar</span>
+                    </button>
                     <button id="btn-toggle-add-form" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1 shadow-md shadow-emerald-500/20">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>+ Agregar Ejercicio</span>
@@ -535,6 +544,164 @@
                 ]
             }
         };
+
+        // ============================================================
+        // SINCRONIZACIÓN ENTRE DISPOSITIVOS (Firebase Firestore)
+        // ============================================================
+        // 1) Creá un proyecto gratis en https://console.firebase.google.com
+        // 2) Agregá una "Web app" y copiá el objeto de configuración acá abajo
+        // 3) Activá Firestore Database (modo producción) y Authentication > Anonymous
+        // 4) Reemplazá los valores de firebaseConfig por los tuyos
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
+
+        let db = null;
+        let syncEnabled = false;
+        let syncCode = localStorage.getItem('corepe_sync_code') || '';
+        let unsubscribeSync = null;
+        let applyingRemoteUpdate = false; // evita re-subir mientras aplicamos datos que llegaron de otro dispositivo
+
+        function isFirebaseConfigured() {
+            return firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY";
+        }
+
+        function initFirebase() {
+            if (!isFirebaseConfigured()) {
+                console.warn("Firebase no está configurado todavía: la sincronización entre dispositivos está desactivada.");
+                return false;
+            }
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                return true;
+            } catch (e) {
+                console.error("Error inicializando Firebase:", e);
+                return false;
+            }
+        }
+
+        function updateSyncBadge() {
+            const badge = document.getElementById('sync-status-badge');
+            if (!badge) return;
+            if (!isFirebaseConfigured()) {
+                badge.classList.add('hidden');
+                return;
+            }
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+            if (syncEnabled) {
+                badge.innerHTML = '<i data-lucide="cloud" class="w-3.5 h-3.5"></i><span>Sincronizado (' + syncCode + ')</span>';
+                badge.className = "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 transition";
+            } else {
+                badge.innerHTML = '<i data-lucide="cloud-off" class="w-3.5 h-3.5"></i><span>Sin sincronizar</span>';
+                badge.className = "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700 transition";
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function connectSync(code) {
+            if (!db && !initFirebase()) {
+                alertModal("La sincronización todavía no está configurada en esta app.");
+                return;
+            }
+            try {
+                await firebase.auth().signInAnonymously();
+            } catch (e) {
+                console.error("Error de autenticación:", e);
+                alertModal("No se pudo conectar. Revisá tu conexión a internet.");
+                return;
+            }
+
+            syncCode = code.trim().toUpperCase();
+            localStorage.setItem('corepe_sync_code', syncCode);
+
+            if (unsubscribeSync) unsubscribeSync();
+
+            const docRef = db.collection('abdomineitor_sync').doc(syncCode);
+
+            try {
+                const snap = await docRef.get();
+                if (!snap.exists) {
+                    // Primer dispositivo con este código: sube lo que ya tenía guardado localmente
+                    await docRef.set({
+                        customExercises: JSON.parse(localStorage.getItem('corepe_custom_exercises') || '[]'),
+                        deletedDefaults: getDeletedDefaultIds(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch (e) {
+                console.error("Error consultando la nube:", e);
+                alertModal("No se pudo conectar a la nube. Revisá tu conexión.");
+                return;
+            }
+
+            unsubscribeSync = docRef.onSnapshot((doc) => {
+                if (!doc.exists) return;
+                const data = doc.data();
+                applyingRemoteUpdate = true;
+                localStorage.setItem('corepe_custom_exercises', JSON.stringify(data.customExercises || []));
+                localStorage.setItem('corepe_deleted_defaults', JSON.stringify(data.deletedDefaults || []));
+                loadCustomExercises();
+                if (typeof libraryModal !== 'undefined' && !libraryModal.classList.contains('hidden')) {
+                    renderLibrary();
+                }
+                if (window.lucide) lucide.createIcons();
+                applyingRemoteUpdate = false;
+            }, (err) => {
+                console.error("Error de sincronización en tiempo real:", err);
+            });
+
+            syncEnabled = true;
+            updateSyncBadge();
+            alertModal('Sincronización activada con el código "' + syncCode + '" 🔄');
+        }
+
+        function disconnectSync() {
+            if (unsubscribeSync) unsubscribeSync();
+            unsubscribeSync = null;
+            syncEnabled = false;
+            localStorage.removeItem('corepe_sync_code');
+            syncCode = '';
+            updateSyncBadge();
+            alertModal("Sincronización desactivada en este dispositivo.");
+        }
+
+        async function pushSyncUpdate() {
+            if (!syncEnabled || !db || applyingRemoteUpdate) return;
+            try {
+                const docRef = db.collection('abdomineitor_sync').doc(syncCode);
+                await docRef.set({
+                    customExercises: JSON.parse(localStorage.getItem('corepe_custom_exercises') || '[]'),
+                    deletedDefaults: getDeletedDefaultIds(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (e) {
+                console.error("Error subiendo cambios a la nube:", e);
+            }
+        }
+
+        function openSyncPanel() {
+            if (!isFirebaseConfigured()) {
+                alertModal("La sincronización todavía no está configurada en esta app.");
+                return;
+            }
+            const msg = syncCode
+                ? 'Sincronización activa con el código: ' + syncCode + '\n\nIngresá un código nuevo para cambiarlo, dejá el campo vacío para DESCONECTAR, o cancelá para no hacer nada.'
+                : 'Ingresá un código de sincronización (el mismo en todos los dispositivos que querés conectar). Ej: PROFERAFA';
+            const input = prompt(msg, syncCode || "");
+            if (input === null) return; // canceló
+            if (input.trim() === "") {
+                if (syncCode) disconnectSync();
+                return;
+            }
+            connectSync(input);
+        }
 
         // Active database merging default with local storage
         let EXERCISE_DATABASE = JSON.parse(JSON.stringify(DEFAULT_EXERCISE_DATABASE));
@@ -776,6 +943,7 @@
                     });
                 });
                 localStorage.setItem('corepe_custom_exercises', JSON.stringify(customsAndEdits));
+                pushSyncUpdate(); // Sube el cambio a la nube para que se vea en otros dispositivos
             } catch (e) {
                 console.error("Error saving custom exercises:", e);
             }
@@ -1359,6 +1527,11 @@
             libraryModal.classList.add('hidden');
         });
 
+        const syncStatusBadge = document.getElementById('sync-status-badge');
+        if (syncStatusBadge) {
+            syncStatusBadge.addEventListener('click', openSyncPanel);
+        }
+
         // Simple Custom Alert
         function alertModal(msg) {
             const toast = document.createElement('div');
@@ -1373,6 +1546,12 @@
             loadCustomExercises(); // Load persistent custom exercises
             lucide.createIcons();
             generateRoutine(); // First initial generate
+
+            // Sincronización entre dispositivos
+            if (initFirebase()) {
+                updateSyncBadge();
+                if (syncCode) connectSync(syncCode); // Reconecta automáticamente si ya había un código guardado
+            }
         };
     </script>
 </body>
